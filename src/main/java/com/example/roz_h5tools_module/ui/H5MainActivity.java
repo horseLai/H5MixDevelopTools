@@ -129,6 +129,10 @@ public class H5MainActivity extends AppCompatActivity implements NetStatusReceiv
         webView.setWebViewClient(new WebViewClient() {
             @Override
             public void onPageFinished(WebView view, String url) {
+                if (MyWebViewHolder.getHolder().shouldClearHistory()){
+                    webView.clearHistory();
+                    MyWebViewHolder.getHolder().shouldClearHistory(false);
+                }
                 super.onPageFinished(view, url);
 
                 mJsExecutorReady = true;
