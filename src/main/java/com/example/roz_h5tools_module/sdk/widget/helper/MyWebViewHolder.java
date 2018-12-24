@@ -1,7 +1,6 @@
 package com.example.roz_h5tools_module.sdk.widget.helper;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +9,7 @@ import android.widget.FrameLayout;
 
 import com.example.roz_h5tools_module.R;
 import com.example.roz_h5tools_module.sdk.widget.MyWebView;
+import com.roz.module.util.LogUtils;
 
 /**
  * @Author horseLai
@@ -22,8 +22,16 @@ public final class MyWebViewHolder {
     private MyWebView mWebView;
     private static MyWebViewHolder sMyWebViewHolder;
     private View pageNoneNet;
-    private static final String TAG = "MyWebViewHolder";
+    private boolean mShouldClearHistory = false;
 
+
+    public boolean shouldClearHistory() {
+        return mShouldClearHistory;
+    }
+
+    public void shouldClearHistory(boolean shouldClearHistory) {
+        this.mShouldClearHistory = shouldClearHistory;
+    }
 
     private MyWebViewHolder() {
     }
@@ -51,7 +59,7 @@ public final class MyWebViewHolder {
                 mWebView = new MyWebView(context);
             }
         }
-        Log.d(TAG, "prepare MyWebView OK...");
+        LogUtils.d("prepare MyWebView OK...");
     }
 
     public MyWebView getMyWebView() {
@@ -61,19 +69,23 @@ public final class MyWebViewHolder {
 
     public void detach() {
         if (mWebView != null) {
-            Log.d(TAG, "detach MyWebView, but not destroy...");
+            LogUtils.d("detach MyWebView, but not destroy...");
             ((ViewGroup) mWebView.getParent()).removeView(mWebView);
+
+            mWebView.clearDisappearingChildren();
             mWebView.removeAllViews();
             mWebView.clearAnimation();
             mWebView.clearFormData();
-            mWebView.clearHistory();
+//            mWebView.clearHistory();
+            mShouldClearHistory = true;
+            mWebView.clearMatches();
             mWebView.getSettings().setJavaScriptEnabled(false);
         }
     }
 
     public void attach(ViewGroup parent, int index) {
         if (mWebView != null) {
-            Log.d(TAG, "attach MyWebView, index of ViewGroup is " + index);
+            LogUtils.d("attach MyWebView, index of ViewGroup is " + index);
 
             WebSettings settings = mWebView.getSettings();
             // 不加此配置会无法加载显示界面
@@ -81,12 +93,13 @@ public final class MyWebViewHolder {
             settings.setSupportZoom(false);
             settings.setJavaScriptEnabled(true);
             settings.setUseWideViewPort(true);
+            settings.setAllowFileAccess(true);
+            settings.setAllowFileAccessFromFileURLs(true);
 
             mWebView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             mWebView.setVerticalScrollBarEnabled(false);
             mWebView.setHorizontalScrollBarEnabled(false);
 
-            // 在WebView上层覆盖一个用于提示如错误等信息的布局层，
             FrameLayout frameLayout = new FrameLayout(parent.getContext());
             frameLayout.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
             frameLayout.addView(mWebView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
@@ -108,6 +121,7 @@ public final class MyWebViewHolder {
         if (pageNoneNet != null)
             pageNoneNet.setVisibility(View.VISIBLE);
     }
+
     public void hideNoneNetPage() {
         if (pageNoneNet != null)
             pageNoneNet.setVisibility(View.GONE);
@@ -121,22 +135,22 @@ public final class MyWebViewHolder {
 
     public void destroy() {
         if (mWebView != null) {
-               Log.d(TAG, "destroy MyWebView...");
+            LogUtils.d("destroy MyWebView...");
             mWebView.destroy();
-            sMyWebViewHolder = null;
+            mWebView = null;
         }
     }
 
     public void pause() {
         if (mWebView != null) {
-               Log.d(TAG, "pause MyWebView...");
+            LogUtils.d("pause MyWebView...");
             mWebView.onPause();
         }
     }
 
     public void resume() {
         if (mWebView != null) {
-               Log.d(TAG, "resume MyWebView...");
+            LogUtils.d("resume MyWebView...");
             mWebView.onResume();
         }
     }
@@ -144,7 +158,7 @@ public final class MyWebViewHolder {
     public void removeJSInterfaces(String... names) {
         if (names == null || names.length == 0) return;
         for (String name : names) {
-               Log.d(TAG, String.format("removeJSInterfaces:: %s ..", name));
+            LogUtils.d(String.format("removeJSInterfaces:: %s ..", name));
             mWebView.removeJavascriptInterface(name);
         }
     }
