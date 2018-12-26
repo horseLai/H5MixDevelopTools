@@ -36,9 +36,9 @@ public class H5JsLocation {
         mLocationHelper = new LocationHelper(context);
     }
 
-    private boolean isPermissionInvalidate(){
-       return ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-               && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED  ;
+    private boolean isPermissionInvalidate() {
+        return ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(mContext, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED;
     }
 
     /**
@@ -48,15 +48,20 @@ public class H5JsLocation {
      */
     @JavascriptInterface
     public void getLastUsedLocation() {
-        if (isPermissionInvalidate()){
-            PermissionChecker.requestPermissions(mContext, sPermissions);
-            return;
-        }
-        Location lastUsedLocation = mLocationHelper.getLastUsedLocation();
-        if (lastUsedLocation != null)
-            JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(lastUsedLocation.getLongitude()), String.valueOf(lastUsedLocation.getLatitude()));
-        else
-            JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+        mContext.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (isPermissionInvalidate()) {
+                    PermissionChecker.requestPermissions(mContext, sPermissions);
+                    return;
+                }
+                Location lastUsedLocation = mLocationHelper.getLastUsedLocation();
+                if (lastUsedLocation != null)
+                    JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(lastUsedLocation.getLongitude()), String.valueOf(lastUsedLocation.getLatitude()));
+                else
+                    JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+            }
+        });
     }
 
     /**
@@ -66,32 +71,47 @@ public class H5JsLocation {
      */
     @JavascriptInterface
     public void getCurrentNetWorkLocation() {
-        if (isPermissionInvalidate()){
+        if (isPermissionInvalidate()) {
             PermissionChecker.requestPermissions(mContext, sPermissions);
             return;
         }
         mLocationHelper.getCurrentLocation(LocationManager.NETWORK_PROVIDER, new LocationHelper.SimpleLocationListener() {
             @Override
-            public void onLocationChanged(Location location) {
-                if (location != null)
-                    JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
-                else
-                    JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+            public void onLocationChanged(final Location location) {
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (location != null)
+                            JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
+                        else
+                            JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
 
             @Override
             public void onProviderDisabled(String provider) {
                 super.onProviderDisabled(provider);
-                JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
+            public void onStatusChanged(final String provider, final int status, Bundle extras) {
                 super.onStatusChanged(provider, status, extras);
-                if (LocationManager.NETWORK_PROVIDER.equals(provider) &&
-                        (status == LocationProvider.TEMPORARILY_UNAVAILABLE ||
-                                status == LocationProvider.OUT_OF_SERVICE))
-                    JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (LocationManager.NETWORK_PROVIDER.equals(provider) &&
+                                (status == LocationProvider.TEMPORARILY_UNAVAILABLE ||
+                                        status == LocationProvider.OUT_OF_SERVICE))
+                            JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
         });
     }
@@ -103,30 +123,45 @@ public class H5JsLocation {
      */
     @JavascriptInterface
     public void getCurrentGPSLocation() {
-        if (isPermissionInvalidate()){
+        if (isPermissionInvalidate()) {
             PermissionChecker.requestPermissions(mContext, sPermissions);
             return;
         }
         mLocationHelper.getCurrentLocation(LocationManager.GPS_PROVIDER, new LocationHelper.SimpleLocationListener() {
             @Override
-            public void onLocationChanged(Location location) {
-                if (location != null)
-                    JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
+            public void onLocationChanged(final Location location) {
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (location != null)
+                            JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
+                    }
+                });
             }
 
             @Override
             public void onProviderDisabled(String provider) {
                 super.onProviderDisabled(provider);
-                JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
+            public void onStatusChanged(final String provider, final int status, Bundle extras) {
                 super.onStatusChanged(provider, status, extras);
-                if (LocationManager.NETWORK_PROVIDER.equals(provider) &&
-                        (status == LocationProvider.TEMPORARILY_UNAVAILABLE ||
-                                status == LocationProvider.OUT_OF_SERVICE))
-                    JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (LocationManager.NETWORK_PROVIDER.equals(provider) &&
+                                (status == LocationProvider.TEMPORARILY_UNAVAILABLE ||
+                                        status == LocationProvider.OUT_OF_SERVICE))
+                            JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
         });
     }
@@ -138,35 +173,49 @@ public class H5JsLocation {
      */
     @JavascriptInterface
     public void getGPSLocationFrequently() {
-        if (isPermissionInvalidate()){
+        if (isPermissionInvalidate()) {
             PermissionChecker.requestPermissions(mContext, sPermissions);
             return;
         }
         mLocationHelper.requestUpdateFrequently(LocationManager.GPS_PROVIDER, new LocationHelper.SimpleLocationListener() {
             @Override
-            public void onLocationChanged(Location location) {
-                if (location != null)
-                    JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
+            public void onLocationChanged(final Location location) {
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (location != null)
+                            JsExecutor.executeJs(mWebView, "onGetLocationOk", String.valueOf(location.getLongitude()), String.valueOf(location.getLatitude()));
+                    }
+                });
             }
 
             @Override
             public void onProviderDisabled(String provider) {
                 super.onProviderDisabled(provider);
-                JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        JsExecutor.executeJs(mWebView, "onGetLocationFailed");
+                    }
+                });
             }
 
             @Override
-            public void onStatusChanged(String provider, int status, Bundle extras) {
+            public void onStatusChanged(final String provider, final int status, Bundle extras) {
                 super.onStatusChanged(provider, status, extras);
-
-                if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
-                    if (LocationProvider.TEMPORARILY_UNAVAILABLE == status)
-                        JsExecutor.executeJs(mWebView, "onStatusChanged", "TEMPORARILY_UNAVAILABLE");
-                    else if (LocationProvider.OUT_OF_SERVICE == status)
-                        JsExecutor.executeJs(mWebView, "onStatusChanged", "OUT_OF_SERVICE");
-                    else if (LocationProvider.AVAILABLE == status)
-                        JsExecutor.executeJs(mWebView, "onStatusChanged", "AVAILABLE");
-                }
+                mContext.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (LocationManager.NETWORK_PROVIDER.equals(provider)) {
+                            if (LocationProvider.TEMPORARILY_UNAVAILABLE == status)
+                                JsExecutor.executeJs(mWebView, "onStatusChanged", "TEMPORARILY_UNAVAILABLE");
+                            else if (LocationProvider.OUT_OF_SERVICE == status)
+                                JsExecutor.executeJs(mWebView, "onStatusChanged", "OUT_OF_SERVICE");
+                            else if (LocationProvider.AVAILABLE == status)
+                                JsExecutor.executeJs(mWebView, "onStatusChanged", "AVAILABLE");
+                        }
+                    }
+                });
             }
         });
     }
